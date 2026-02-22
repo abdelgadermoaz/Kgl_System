@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useTheme } from '../ThemeContext';
@@ -14,8 +14,15 @@ export default function SalesDashboard() {
   const navigate = useNavigate();
 
   const [saleForm, setSaleForm] = useState({
-    saleType: 'CASH', produceName: '', tonnageKg: '', unitPriceUgx: '', 
-    buyerName: '', amountPaidUgx: '', nationalIdNIN: '', dueDate: '', branch: 'Kampala HQ'
+    saleType: 'CASH', 
+    produceName: '', 
+    tonnageKg: '', 
+    unitPriceUgx: '', 
+    buyerName: '', 
+    amountPaidUgx: '', 
+    nationalIdNIN: '', 
+    dueDate: '', 
+    branch: 'Kampala HQ'
   });
 
   const fetchData = async () => {
@@ -62,7 +69,17 @@ export default function SalesDashboard() {
 
       await api.post('/sales', payload);
       toast.success('Sale recorded successfully!');
-      setSaleForm({ saleType: 'CASH', produceName: '', tonnageKg: '', unitPriceUgx: '', buyerName: '', amountPaidUgx: '', nationalIdNIN: '', dueDate: '', branch: 'Kampala HQ' });
+      setSaleForm({ 
+        saleType: 'CASH', 
+        produceName: '', 
+        tonnageKg: '', 
+        unitPriceUgx: '', 
+        buyerName: '', 
+        amountPaidUgx: '', 
+        nationalIdNIN: '', 
+        dueDate: '', 
+        branch: 'Kampala HQ' 
+      });
       fetchData(); 
     } catch (err: any) {
       if (err.errors) {
@@ -242,8 +259,6 @@ export default function SalesDashboard() {
                               </button>
                             </>
                           )}
-                          
-                          {/* NEW: Print Receipt Button */}
                           <button 
                             onClick={() => generateReceipt(sale)}
                             className="p-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded transition-colors ml-auto"
@@ -260,7 +275,6 @@ export default function SalesDashboard() {
               </table>
             </div>
           </div>
-
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5001/api/v1';
+const BASE_URL = 'http://localhost:5001/api';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token');
