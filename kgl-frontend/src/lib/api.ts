@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5001/api';
+const BASE_URL = 'https://kgl-backend-api.onrender.com/api';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token');
