@@ -6,7 +6,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/summary', requireAuth, requireRole(['DIRECTOR']), async (req, res) => {
+router.get('/summary', requireAuth, requireRole(['DIRECTOR', 'MANAGER']), async (req, res) => {
   try {
     // 1. Calculate Total Revenue
     const sales = await Sale.find();

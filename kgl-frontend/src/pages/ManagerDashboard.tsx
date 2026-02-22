@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { useTheme } from '../ThemeContext';
 import { Moon, Sun, LogOut, PackagePlus, BarChart3, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import kglLogo from '../assets/kgl-logo.png';
 
 export default function ManagerDashboard() {
   const [reportData, setReportData] = useState<any>(null);
@@ -72,7 +73,8 @@ export default function ManagerDashboard() {
       {/* Top Navigation */}
       <div className="flex justify-between items-center mb-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2">
-          <BarChart3 /> KGL Manager Workspace
+          <img src={kglLogo} alt="KGL Logo" className="h-10 w-auto" />
+           KGL Manager Workspace
         </h1>
         <div className="flex items-center gap-4">
           <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
