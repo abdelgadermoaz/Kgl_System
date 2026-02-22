@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useTheme } from '../ThemeContext';
@@ -52,29 +52,48 @@ export default function SalesDashboard() {
         amountPaidUgx: Number(saleForm.amountPaidUgx)
       };
 
-      // Clean up empty optional fields for Zod validation
       if (saleForm.saleType === 'CASH') {
         delete payload.nationalIdNIN;
         delete payload.dueDate;
       } else {
-        // FIX: Convert HTML date to strict ISO format for the backend validator
-        payload.dueDate = payload.dueDate 
-          ? new Date(payload.dueDate).toISOString() 
-          : new Date().toISOString();
+        payload.dueDate = payload.dueDate ? new Date(payload.dueDate).toISOString() : new Date().toISOString();
       }
 
       await api.post('/sales', payload);
       toast.success('Sale recorded successfully!');
-      
-      // Reset the form
-      setSaleForm({ 
-        saleType: 'CASH', produceName: '', tonnageKg: '', unitPriceUgx: '', 
-        buyerName: '', amountPaidUgx: '', nationalIdNIN: '', dueDate: '', branch: 'Kampala HQ' 
-      });
-      fetchData(); // Refresh tables instantly
-
+      setSaleForm({ saleType: 'CASH', produceName: '', tonnageKg: '', unitPriceUgx: '', buyerName: '', amountPaidUgx: '', nationalIdNIN: '', dueDate: '', branch: 'Kampala HQ' });
+      fetchData(); 
     } catch (err: any) {
-      toast.error(err.message || 'Failed to record sale');
+      if (err.errors) {
+        err.errors.forEach((e: any) => toast.error(e.message));
+      } else {
+        toast.error(err.message || 'Failed to record sale');
+      }
+    }
+  };
+
+  // NEW FUNCTION: Handle collecting debt
+  const handlePayment = async (saleId: string, currentDue: number) => {
+    const amountStr = window.prompt(`Enter payment amount (Remaining Balance: UGX ${currentDue.toLocaleString()}):`);
+    if (!amountStr) return; // User cancelled
+    
+    const paymentAmount = Number(amountStr);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      toast.error('Please enter a valid amount.');
+      return;
+    }
+
+    if (paymentAmount > currentDue) {
+      toast.error('Payment cannot be greater than the remaining balance.');
+      return;
+    }
+
+    try {
+      await api.post(`/sales/${saleId}/pay`, { paymentAmount });
+      toast.success('Payment recorded successfully!');
+      fetchData(); // Instantly refresh the table to show updated balances
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to record payment');
     }
   };
 
@@ -139,11 +158,10 @@ export default function SalesDashboard() {
               <input required type="number" min="0" className="w-full p-2 border rounded dark:bg-gray-900 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-sky-500" value={saleForm.amountPaidUgx} onChange={e => setSaleForm({...saleForm, amountPaidUgx: e.target.value})} />
             </div>
 
-            {/* Credit Only Fields */}
             {saleForm.saleType === 'CREDIT' && (
               <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg space-y-3">
                 <div>
-                  <label className="block text-sm mb-1 text-orange-800 dark:text-orange-300">National ID (NIN) *Required for Credit</label>
+                  <label className="block text-sm mb-1 text-orange-800 dark:text-orange-300">National ID (NIN)</label>
                   <input required type="text" className="w-full p-2 border rounded dark:bg-gray-900 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-orange-500" value={saleForm.nationalIdNIN} onChange={e => setSaleForm({...saleForm, nationalIdNIN: e.target.value})} />
                 </div>
                 <div>
@@ -162,7 +180,6 @@ export default function SalesDashboard() {
         {/* Tables Section */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Inventory Table (Quick Look) */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 border-b dark:border-gray-700 pb-2">
               <ListChecks size={20} className="text-yellow-500" /> Available Stock to Sell
@@ -189,7 +206,6 @@ export default function SalesDashboard() {
             </div>
           </div>
 
-          {/* Recent Sales Table */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 border-b dark:border-gray-700 pb-2">
               <ListChecks size={20} className="text-green-500" /> Recent Sales Ledger
@@ -199,29 +215,39 @@ export default function SalesDashboard() {
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300">
                     <th className="p-2 border-b dark:border-gray-700">Type</th>
-                    <th className="p-2 border-b dark:border-gray-700">Produce</th>
                     <th className="p-2 border-b dark:border-gray-700">Buyer</th>
-                    <th className="p-2 border-b dark:border-gray-700">Kg Sold</th>
                     <th className="p-2 border-b dark:border-gray-700">Total (UGX)</th>
-                    <th className="p-2 border-b dark:border-gray-700">Status</th>
+                    <th className="p-2 border-b dark:border-gray-700 text-orange-600">Balance Due</th>
+                    <th className="p-2 border-b dark:border-gray-700">Status & Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sales.map((sale) => (
                     <tr key={sale._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="p-2 font-bold text-gray-500">{sale.saleType}</td>
-                      <td className="p-2">{sale.produceName}</td>
                       <td className="p-2">{sale.buyerName}</td>
-                      <td className="p-2">{sale.tonnageKg} kg</td>
                       <td className="p-2">UGX {sale.totalAmountUgx.toLocaleString()}</td>
+                      <td className="p-2 font-mono text-orange-600 font-bold">
+                        {sale.amountDueUgx > 0 ? `UGX ${sale.amountDueUgx.toLocaleString()}` : '—'}
+                      </td>
                       <td className="p-2">
-                        {sale.saleType === 'CASH' 
-                          ? <span className="text-green-600 font-bold">PAID</span> 
-                          : <span className="text-orange-500 font-bold">{sale.creditStatus}</span>}
+                        {sale.saleType === 'CASH' || sale.creditStatus === 'PAID' ? (
+                           <span className="text-green-600 font-bold">PAID</span> 
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-orange-500 font-bold">{sale.creditStatus}</span>
+                            <button 
+                              onClick={() => handlePayment(sale._id, sale.amountDueUgx)}
+                              className="px-2 py-1 bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300 rounded text-xs font-bold transition-colors"
+                            >
+                              Pay Balance
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
-                  {sales.length === 0 && <tr><td colSpan={6} className="p-4 text-center text-gray-500">No sales recorded yet.</td></tr>}
+                  {sales.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-500">No sales recorded yet.</td></tr>}
                 </tbody>
               </table>
             </div>
