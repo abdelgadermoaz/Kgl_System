@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useTheme } from '../ThemeContext';
-import { Moon, Sun, LogOut, ShoppingCart, ListChecks } from 'lucide-react';
+import { Moon, Sun, LogOut, ShoppingCart, ListChecks, Printer } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateReceipt } from '../lib/generateReceipt';
 
 export default function SalesDashboard() {
   const [inventory, setInventory] = useState<any[]>([]);
@@ -72,10 +73,9 @@ export default function SalesDashboard() {
     }
   };
 
-  // NEW FUNCTION: Handle collecting debt
   const handlePayment = async (saleId: string, currentDue: number) => {
     const amountStr = window.prompt(`Enter payment amount (Remaining Balance: UGX ${currentDue.toLocaleString()}):`);
-    if (!amountStr) return; // User cancelled
+    if (!amountStr) return; 
     
     const paymentAmount = Number(amountStr);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -91,7 +91,7 @@ export default function SalesDashboard() {
     try {
       await api.post(`/sales/${saleId}/pay`, { paymentAmount });
       toast.success('Payment recorded successfully!');
-      fetchData(); // Instantly refresh the table to show updated balances
+      fetchData(); 
     } catch (err: any) {
       toast.error(err.message || 'Failed to record payment');
     }
@@ -102,7 +102,6 @@ export default function SalesDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a] text-gray-900 dark:text-gray-100 p-8 transition-colors duration-300">
       
-      {/* Top Navigation */}
       <div className="flex justify-between items-center mb-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2">
           <ShoppingCart /> KGL Sales Agent Workspace
@@ -118,7 +117,6 @@ export default function SalesDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sale Form */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 lg:col-span-1 h-fit">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2 border-b dark:border-gray-700 pb-2">
             <ShoppingCart size={20} className="text-sky-500" /> Record New Sale
@@ -177,7 +175,6 @@ export default function SalesDashboard() {
           </form>
         </div>
 
-        {/* Tables Section */}
         <div className="lg:col-span-2 space-y-8">
           
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -231,19 +228,30 @@ export default function SalesDashboard() {
                         {sale.amountDueUgx > 0 ? `UGX ${sale.amountDueUgx.toLocaleString()}` : '—'}
                       </td>
                       <td className="p-2">
-                        {sale.saleType === 'CASH' || sale.creditStatus === 'PAID' ? (
-                           <span className="text-green-600 font-bold">PAID</span> 
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-orange-500 font-bold">{sale.creditStatus}</span>
-                            <button 
-                              onClick={() => handlePayment(sale._id, sale.amountDueUgx)}
-                              className="px-2 py-1 bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300 rounded text-xs font-bold transition-colors"
-                            >
-                              Pay Balance
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {sale.saleType === 'CASH' || sale.creditStatus === 'PAID' ? (
+                            <span className="text-green-600 font-bold">PAID</span> 
+                          ) : (
+                            <>
+                              <span className="text-orange-500 font-bold">{sale.creditStatus}</span>
+                              <button 
+                                onClick={() => handlePayment(sale._id, sale.amountDueUgx)}
+                                className="px-2 py-1 bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300 rounded text-xs font-bold transition-colors"
+                              >
+                                Pay Balance
+                              </button>
+                            </>
+                          )}
+                          
+                          {/* NEW: Print Receipt Button */}
+                          <button 
+                            onClick={() => generateReceipt(sale)}
+                            className="p-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded transition-colors ml-auto"
+                            title="Download Receipt"
+                          >
+                            <Printer size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
