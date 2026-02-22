@@ -1,5 +1,5 @@
 import express from 'express';
-import User from '../models/User.js';
+import user from '../models/user.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import bcrypt from 'bcryptjs';
 
