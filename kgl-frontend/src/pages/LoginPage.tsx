@@ -5,6 +5,9 @@ import { api } from '../lib/api';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 
+// 1. IMPORT YOUR LOGO HERE
+import logo from '../assets/kgl-logo.png'; 
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +27,6 @@ export default function LoginPage() {
       
       toast.success(`Welcome back, ${response.user.name}!`);
 
-      // Redirect based on role
       const role = response.user.role;
       if (role === 'MANAGER') navigate('/dashboard/manager');
       else if (role === 'SALES_AGENT') navigate('/dashboard/sales');
@@ -48,6 +50,13 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
         <div className="text-center">
+          {/* 2. LOGO ADDED HERE */}
+          <img 
+            src={logo} 
+            alt="KGL Logo" 
+            className="mx-auto h-20 w-auto mb-2 object-contain" 
+          />
+          
           <h1 className="text-3xl font-bold text-sky-600 dark:text-sky-400">KGL System</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">Operations Management</p>
         </div>
@@ -58,8 +67,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
-              dark:text-white
-              className="w-full mt-1 p-3 rounded-lg border dark:bg-gray-900 dark:border-gray-600 outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+              className="w-full mt-1 p-3 rounded-lg border dark:bg-gray-900 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-sky-500 transition-all"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,8 +79,7 @@ export default function LoginPage() {
             <input
               type="password"
               required
-              dark:text-white
-              className="w-full mt-1 p-3 rounded-lg border dark:bg-gray-900 dark:border-gray-600 outline-none focus:ring-2 focus:ring-sky-500 transition-all"
+              className="w-full mt-1 p-3 rounded-lg border dark:bg-gray-900 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-sky-500 transition-all"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
